@@ -1,0 +1,12 @@
+[project]
+name = "url-shortener-service"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.121.2",
+    "pre-commit>=4.5.0",
+    "python-dotenv>=1.2.1",
+    "uvicorn[standard]>=0.38.0",
+]

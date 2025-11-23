@@ -1,0 +1,19 @@
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments (if any local)
+.venv/
+venv/
+
+# Environment files
+.env
+
+# Docker config (to avoid copying Dockerfile/dev compose if not needed)
+docker/
+
+# Git files
+.git
+.gitignore

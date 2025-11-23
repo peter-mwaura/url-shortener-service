@@ -1,0 +1,12 @@
+services:
+    api:
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile.dev
+        env_file:
+            - ../.env
+        ports:
+            - '8000:8000'
+        volumes:
+            - ../:/app
+        command: uv run python main.py
