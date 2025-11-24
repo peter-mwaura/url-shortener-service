@@ -52,7 +52,7 @@ A lightweight, containerized **FastAPI URL Shortener** with:
 ## 📥 Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/url-shortener-service.git
+git clone https://github.com/peter-mwaura/url-shortener-service.git
 cd url-shortener-service
 ```
 
