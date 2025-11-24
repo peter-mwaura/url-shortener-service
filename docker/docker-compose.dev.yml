@@ -36,5 +36,19 @@ services:
             - '6379:6379'
         command: ['redis-server', '--appendonly', 'yes']
 
+    tests:
+        build:
+            context: ..
+            dockerfile: docker/Dockerfile.dev
+        container_name: url_shortener_tests
+        env_file:
+            - ../.env.dev
+        volumes:
+            - ../:/app
+        depends_on:
+            - postgres
+            - redis
+        command: uv run pytest -q
+
 volumes:
     pgdata:
