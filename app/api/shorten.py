@@ -2,7 +2,8 @@ import os
 import random
 import string
 
-from fastapi import APIRouter, Depends, HTTPException
+import redis
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -14,14 +15,48 @@ router = APIRouter(tags=["Shorten URLs"])
 # Load domain from environment
 SHORT_URL_DOMAIN = os.getenv("SHORT_URL_DOMAIN", "http://localhost:8000")
 
+# Rate limiting settings
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")  # Docker service name
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+RATE_LIMIT = int(os.getenv("RATE_LIMIT", 5))  # requests per RATE_PERIOD
+RATE_PERIOD = int(os.getenv("RATE_PERIOD", 60))  # seconds
+
+# Redis connection
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
+
 
 def generate_short_code(length: int = 6) -> str:
     """Generate a random alphanumeric short code."""
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
+def check_rate_limit(client_ip: str):
+    """Check and enforce fixed-window rate limit per client IP."""
+    key = f"rate_limit:{client_ip}"
+    current = r.get(key)
+    if current:
+        current = int(current)
+        if current >= RATE_LIMIT:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded ({RATE_LIMIT}/{RATE_PERIOD}s)",
+            )
+        else:
+            r.incr(key)
+    else:
+        r.set(key, 1, ex=RATE_PERIOD)
+
+
 @router.post("/shorten", response_model=ShortenURLResponse)
-def create_short_url(url_in: ShortenURLRequest, db: Session = Depends(get_db)):
+def create_short_url(
+    url_in: ShortenURLRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    # Rate limiting
+    client_ip = request.client.host
+    check_rate_limit(client_ip)
+
     # Handle custom alias if provided
     if url_in.custom_alias:
         exists = db.query(URL).filter(URL.short_code == url_in.custom_alias).first()
